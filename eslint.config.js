@@ -10,6 +10,7 @@ export default [
   {
     rules: {
       "prefer-const": "warn",
+      "no-unused-vars": "warn",
     },
   },
   eslintConfigPrettier,
