@@ -1,0 +1,25 @@
+{
+  "name": "ovus",
+  "version": "0.0.1",
+  "description": "HTML template engine designed for creating components",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prunus-dev/ovus.git"
+  },
+  "keywords": [
+    "html",
+    "template",
+    "component",
+    "alpine"
+  ],
+  "author": "prunus-dev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/prunus-dev/ovus/issues"
+  },
+  "homepage": "https://github.com/prunus-dev/ovus#readme"
+}
