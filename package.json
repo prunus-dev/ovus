@@ -1,6 +1,6 @@
 {
   "name": "ovus",
-  "version": "0.0.4",
+  "version": "0.0.9",
   "description": "HTML template engine designed for creating components",
   "main": "index.js",
   "type": "module",
