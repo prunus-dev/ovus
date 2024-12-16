@@ -11,6 +11,7 @@ const simpleHTML = `
 const stringHTML = `
 <body>
   <thing text="<!-- not actually a comment -->"></thing>
+  <thing text="also escaped \\" quotes \\" \\\\ "></thing>
   <!-- thing class="hi" -->
 </body>
 `.trim();
@@ -31,7 +32,10 @@ const exampleStringHTML = {
   segments: [
     {
       comment: false,
-      text: '<body>\n  <thing text="<!-- not actually a comment -->"></thing>\n  ',
+      text:
+        '<body>\n  <thing text="<!-- not actually a comment -->"></thing>\n' +
+        // eslint-disable-next-line no-useless-escape
+        '  <thing text="also escaped \" quotes \" \\ "></thing>\n  ',
     },
     { comment: true, text: '<!-- thing class="hi" -->' },
     { comment: false, text: "\n</body>" },
@@ -122,11 +126,12 @@ describe("methods:", function () {
       expect(this.scanner.segments).to.deep.equal(exampleHTML.segments);
     });
 
-    it("should ignore comments in quoted string", function () {
-      this.scanner = new CommentScanner(exampleStringHTML);
+    it("should work with quotes (ignore quoted comments, consider escapes)", function () {
+      const stringScanner = new CommentScanner(exampleStringHTML.text);
 
-      this.scanner.scan();
-      expect(this.scanner.segments).to.deep.equal(exampleStringHTML.segments);
+      stringScanner.scan();
+
+      expect(stringScanner.segments).to.deep.equal(exampleStringHTML.segments);
     });
   });
 });
