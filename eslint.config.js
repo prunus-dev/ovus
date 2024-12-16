@@ -12,6 +12,7 @@ export default [
       "prefer-const": "warn",
       "no-unused-vars": "warn",
       "no-undef": "warn",
+      "no-unused-private-class-members": "warn",
     },
   },
   eslintConfigPrettier,
