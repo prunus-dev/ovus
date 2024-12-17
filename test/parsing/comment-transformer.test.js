@@ -3,6 +3,10 @@ import { describe, it, before } from "mocha";
 import { CommentTransformer } from "../../lib/parsing/comment-transformer.js";
 
 const exampleComment = '<!-- @button class="rounded p-1 m-2 bg-light" -->';
+const exampleData = {
+  name: "button",
+  properties: [{ class: "rounded p-1 m-2 bg-light" }],
+};
 
 describe("CommentTransformer", function () {
   describe("properties:", function () {
@@ -36,8 +40,37 @@ describe("CommentTransformer", function () {
       this.transformer = new CommentTransformer();
     });
 
+    describe("reset()", function () {
+      // TODO: it should reset scanner state.
+      //     | (implement after transform(), to check non-initial state)
+
+      it("should reset with no loaded text", function () {
+        const emptyTransformer = new CommentTransformer();
+        emptyTransformer.reset();
+
+        expect(emptyTransformer.position).to.equal(0);
+        expect(emptyTransformer.templateData).to.be.null;
+      });
+    });
+
     describe("load()", function () {
-      it("should load a string into the transformer", function () {});
+      it("should load a string into the transformer", function () {
+        const emptyTransformer = new CommentTransformer();
+        emptyTransformer.load(exampleComment);
+
+        expect(emptyTransformer.text).to.equal(exampleComment);
+      });
+
+      it("should throw on non-string argument", function () {
+        const emptyTransformer = new CommentTransformer();
+        const loading = (input) => () => emptyTransformer.load(input);
+
+        expect(loading(1)).to.throw();
+        expect(loading(true)).to.throw();
+        expect(loading({})).to.throw();
+        expect(loading(null)).to.throw();
+        expect(loading(undefined)).to.throw();
+      });
     });
   });
 });
