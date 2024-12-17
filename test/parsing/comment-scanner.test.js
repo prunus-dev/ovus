@@ -78,6 +78,11 @@ describe("CommentScanner", function () {
       expect(this.scanner.text).to.equal(exampleHTML.text);
     });
 
+    it("@text should return null before load", function () {
+      const emptyScanner = new CommentScanner();
+      expect(emptyScanner.text).to.be.null;
+    });
+
     it("@position should return 0 before scan", function () {
       expect(this.scanner.position).to.equal(0);
     });
