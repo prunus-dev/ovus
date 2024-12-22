@@ -190,6 +190,12 @@ describe("CommentScanner", function () {
         const emptyScanner = new CommentScanner();
         expect(() => emptyScanner.scan()).to.throw();
       });
+
+      it('should ignore an "incomplete" comment (missing <!-- or -->', function () {
+        const text = "<!-- not a comment";
+        const scanner = new CommentScanner(text);
+        expect(scanner.scan()).to.deep.equal([{ comment: false, text }]);
+      });
     });
   });
 });
