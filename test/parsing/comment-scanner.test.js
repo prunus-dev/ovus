@@ -42,96 +42,160 @@ const exampleStringHTML = {
   ],
 };
 
-describe("properties:", function () {
-  before(function () {
-    this.scanner = new CommentScanner(exampleHTML.text);
+describe("CommentScanner", function () {
+  describe("constructor:", function () {
+    it("should take a string without throwing", function () {
+      expect(() => new CommentScanner("some text")).to.not.throw();
+    });
+
+    it("should start empty for no argument", function () {
+      const emptyScanner = new CommentScanner();
+
+      expect(emptyScanner.text).to.be.null;
+      expect(emptyScanner.position).to.equal(0);
+      expect(emptyScanner.segments).to.deep.equal([]);
+    });
+
+    it("should throw on non-string arguments", function () {
+      const cscan = (value) => () => new CommentScanner(value);
+
+      expect(cscan(1)).to.throw(TypeError);
+      expect(cscan(true)).to.throw(TypeError);
+      expect(cscan({})).to.throw();
+    });
   });
 
-  this.afterEach(function () {
-    this.scanner.reset();
-  });
+  describe("properties:", function () {
+    before(function () {
+      this.scanner = new CommentScanner(exampleHTML.text);
+    });
 
-  it("@text should return scanner text", function () {
-    expect(this.scanner.text).to.equal(exampleHTML.text);
-  });
-
-  it("@position should return 0 before scan", function () {
-    expect(this.scanner.position).to.equal(0);
-  });
-
-  it("@position should return text.length after scan", function () {
-    this.scanner.scan();
-    expect(this.scanner.position).to.equal(exampleHTML.text.length);
-  });
-
-  it("@segments should return [] before scan", function () {
-    expect(this.scanner.segments).to.deep.equal([]);
-  });
-
-  it("@segments should have 3 elements for HTML with one comment", function () {
-    this.scanner.scan();
-    expect(this.scanner.segments.length).to.equal(exampleHTML.segments.length);
-  });
-
-  it("@segments should equal HTML split by comment after scan", function () {
-    this.scanner.scan();
-    expect(this.scanner.segments).to.deep.equal(exampleHTML.segments);
-  });
-});
-
-describe("methods:", function () {
-  before(function () {
-    this.scanner = new CommentScanner(exampleHTML.text);
-  });
-
-  afterEach(function () {
-    this.scanner.reset();
-  });
-
-  describe("reset()", function () {
-    it("should reset the scanner state", function () {
-      this.scanner.scan();
+    this.afterEach(function () {
       this.scanner.reset();
+    });
 
+    it("@text should return scanner text", function () {
+      expect(this.scanner.text).to.equal(exampleHTML.text);
+    });
+
+    it("@text should return null before load", function () {
+      const emptyScanner = new CommentScanner();
+      expect(emptyScanner.text).to.be.null;
+    });
+
+    it("@position should return 0 before scan", function () {
       expect(this.scanner.position).to.equal(0);
+    });
+
+    it("@position should return text.length after scan", function () {
+      this.scanner.scan();
+      expect(this.scanner.position).to.equal(exampleHTML.text.length);
+    });
+
+    it("@segments should return [] before scan", function () {
       expect(this.scanner.segments).to.deep.equal([]);
     });
-  });
-  describe("commentNext()", function () {
-    it("should return true if a comment is next", function () {
-      const commentScanner = new CommentScanner("<!-- html comment -->");
 
-      expect(commentScanner.commentNext()).to.be.true;
-    });
-
-    it("should return false otherwise", function () {
-      expect(this.scanner.commentNext()).to.be.false;
-    });
-  });
-
-  describe("scan()", function () {
-    it("should not separate without HTML comments", function () {
-      const noCommentHTML = "<body></body>";
-      const noCommentScanner = new CommentScanner(noCommentHTML);
-      noCommentScanner.scan();
-
-      expect(noCommentScanner.segments).to.deep.equal([
-        { comment: false, text: noCommentHTML },
-      ]);
-    });
-
-    it("should separate HTML by comments", function () {
+    it("@segments should have 3 elements for HTML with one comment", function () {
       this.scanner.scan();
+      expect(this.scanner.segments.length).to.equal(
+        exampleHTML.segments.length,
+      );
+    });
 
+    it("@segments should equal HTML split by comment after scan", function () {
+      this.scanner.scan();
       expect(this.scanner.segments).to.deep.equal(exampleHTML.segments);
     });
+  });
 
-    it("should work with quotes (ignore quoted comments, consider escapes)", function () {
-      const stringScanner = new CommentScanner(exampleStringHTML.text);
+  describe("methods:", function () {
+    before(function () {
+      this.scanner = new CommentScanner(exampleHTML.text);
+    });
 
-      stringScanner.scan();
+    afterEach(function () {
+      this.scanner.reset();
+    });
 
-      expect(stringScanner.segments).to.deep.equal(exampleStringHTML.segments);
+    describe("reset()", function () {
+      it("should reset the scanner state", function () {
+        this.scanner.scan();
+        this.scanner.reset();
+
+        expect(this.scanner.position).to.equal(0);
+        expect(this.scanner.segments).to.deep.equal([]);
+      });
+    });
+
+    describe("load()", function () {
+      it("should set the text to the given value", function () {
+        const newText = "new text";
+        const scanner = new CommentScanner("dummy text");
+
+        scanner.load(newText);
+        expect(scanner.text).to.equal(newText);
+      });
+
+      it("should reset the scanner state on load", function () {
+        const newText = "new text";
+        const scanner = new CommentScanner("dummy text");
+
+        scanner.load(newText);
+        expect(scanner.position).to.equal(0);
+        expect(scanner.segments).to.deep.equal([]);
+      });
+
+      it("should throw on non-string argument", function () {
+        const scanner = new CommentScanner();
+        const load = (input) => () => scanner.load(input);
+
+        expect(load(null)).to.throw();
+        expect(load(undefined)).to.throw();
+        expect(load(1)).to.throw();
+        expect(load(false)).to.throw();
+        expect(load({})).to.throw();
+      });
+    });
+
+    describe("scan()", function () {
+      it("should not separate without HTML comments", function () {
+        const noCommentHTML = "<body></body>";
+        const noCommentScanner = new CommentScanner(noCommentHTML);
+        const segments = noCommentScanner.scan();
+
+        expect(segments).to.deep.equal([
+          { comment: false, text: noCommentHTML },
+        ]);
+      });
+
+      it("should separate HTML by comments", function () {
+        const segments = this.scanner.scan();
+        expect(segments).to.deep.equal(exampleHTML.segments);
+      });
+
+      it("should work with quotes (ignore quoted comments, consider escapes)", function () {
+        const stringScanner = new CommentScanner(exampleStringHTML.text);
+        const segments = stringScanner.scan();
+
+        expect(segments).to.deep.equal(exampleStringHTML.segments);
+      });
+
+      it("should output the same as @segments", function () {
+        const segments = this.scanner.scan();
+        expect(segments).to.equal(this.scanner.segments);
+      });
+
+      it("should throw if empty scanner (has null text)", function () {
+        const emptyScanner = new CommentScanner();
+        expect(() => emptyScanner.scan()).to.throw();
+      });
+
+      it('should ignore an "incomplete" comment (missing <!-- or -->', function () {
+        const text = "<!-- not a comment";
+        const scanner = new CommentScanner(text);
+        expect(scanner.scan()).to.deep.equal([{ comment: false, text }]);
+      });
     });
   });
 });
