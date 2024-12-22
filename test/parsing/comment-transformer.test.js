@@ -1,12 +1,8 @@
 import { expect } from "chai";
-import { describe, it, before } from "mocha";
+import { describe, it } from "mocha";
 import { CommentTransformer } from "../../lib/parsing/comment-transformer.js";
 
 const exampleComment = '<!-- @button class="rounded p-1 m-2 bg-light" -->';
-const exampleData = {
-  name: "button",
-  properties: [{ class: "rounded p-1 m-2 bg-light" }],
-};
 
 describe("CommentTransformer", function () {
   describe("properties:", function () {
@@ -26,23 +22,41 @@ describe("CommentTransformer", function () {
       expect(emptyTransformer.position).to.equal(0);
     });
 
-    // TODO: @position should return text.length after transform
+    it("@position should return text.length after transform", function () {
+      const text = "<!-- @button -->";
+      const transformer = new CommentTransformer(text);
+      transformer.transform();
+
+      expect(transformer.position).to.equal(text.length);
+    });
 
     it("@templateData should return null before transform", function () {
       const emptyTransformer = new CommentTransformer();
       expect(emptyTransformer.templateData).to.be.null;
     });
 
-    // TODO: @templateData should return object with values after transform
-  });
-  describe("methods:", function () {
-    before(function () {
-      this.transformer = new CommentTransformer();
-    });
+    it("@templateData should return an expected object after transform", function () {
+      const transformer = new CommentTransformer(
+        '<!-- @button class="stuff" -->',
+      );
+      const outputData = { name: "button", properties: [{ class: "stuff" }] };
 
+      transformer.transform();
+      expect(transformer.templateData).to.deep.equal(outputData);
+    });
+  });
+
+  describe("methods:", function () {
     describe("reset()", function () {
-      // TODO: it should reset scanner state.
-      //     | (implement after transform(), to check non-initial state)
+      it("should reset scanner state", function () {
+        const transformer = new CommentTransformer("<!-- @button -->");
+
+        transformer.transform();
+        transformer.reset();
+
+        expect(transformer.position).to.equal(0);
+        expect(transformer.templateData).to.be.null;
+      });
 
       it("should reset with no loaded text", function () {
         const emptyTransformer = new CommentTransformer();
@@ -162,14 +176,15 @@ describe("CommentTransformer", function () {
 
       it("should throw if no --> at end of comment", function () {
         const transformer = new CommentTransformer("<!-- @button");
-
         expect(() => transformer.transform()).to.throw();
-        // console.log(transformer.transform());
+
+        transformer.load("<!-- @button class='hi'");
+        expect(() => transformer.transform()).to.throw();
       });
 
       it("should throw if no = for property", function () {
         // Test no "=" or value in general.
-        const transformer = new CommentTransformer("<!-- @button class");
+        const transformer = new CommentTransformer("<!-- @button class -->");
         expect(() => transformer.transform()).to.throw();
 
         // Also test if no "=" between prop name and value
@@ -179,7 +194,7 @@ describe("CommentTransformer", function () {
 
       it("should throw if no open quote for property value", function () {
         // Test no quotes.
-        const transformer = new CommentTransformer("<!-- @button class=hi");
+        const transformer = new CommentTransformer("<!-- @button class=hi -->");
         expect(() => transformer.transform()).to.throw();
 
         // Also test literally only end quote.
@@ -189,7 +204,7 @@ describe("CommentTransformer", function () {
 
       it("should throw if no end quote for property value", function () {
         // Test no quotes.
-        const transformer = new CommentTransformer("<!-- @button class=hi");
+        const transformer = new CommentTransformer("<!-- @button class=hi -->");
         expect(() => transformer.transform()).to.throw();
 
         // Also test literally only end quote.
@@ -198,7 +213,9 @@ describe("CommentTransformer", function () {
       });
 
       it("should throw on mismatched quotes (\" vs ')", function () {
-        const transformer = new CommentTransformer("<!-- @button class=\"hi'");
+        const transformer = new CommentTransformer(
+          "<!-- @button class=\"hi' -->",
+        );
         expect(() => transformer.transform()).to.throw();
       });
 
@@ -206,6 +223,11 @@ describe("CommentTransformer", function () {
         const transformer = new CommentTransformer("<!-- @$badname -->");
 
         expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw on invalid template property name", function () {
+        const transform = new CommentTransformer("<!-- @button $class='x'");
+        expect(() => transform.transform()).to.throw();
       });
     });
   });
