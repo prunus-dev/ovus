@@ -72,5 +72,141 @@ describe("CommentTransformer", function () {
         expect(loading(undefined)).to.throw();
       });
     });
+
+    describe("transform()", function () {
+      it("transforms with only template name", function () {
+        const transformer = new CommentTransformer("<!-- @button -->");
+        const outputData = { name: "button", properties: [] };
+
+        expect(transformer.transform()).to.deep.equal(outputData);
+      });
+
+      it("transforms with one property", function () {
+        const transformer = new CommentTransformer(
+          "<!-- @button class='p-2' -->",
+        );
+        const outputData = { name: "button", properties: [{ class: "p-2" }] };
+
+        expect(transformer.transform()).to.deep.equal(outputData);
+      });
+
+      it("transforms with multiple properties (2-10)", function () {
+        const props = [
+          "x-on:click",
+          "x-on:hover",
+          "x-on:focus",
+          "x-on:unfocus",
+          "x-on:click.shift",
+          "x-on:input",
+          "x-on:custom-event",
+          "x-on:keyup",
+          "x-on:keydown",
+          "x-on:submit",
+        ];
+
+        // Loop from [2,10] properties and test each one for expected output.
+        for (let x = 2; x < props.length; x++) {
+          const templateProps = props.slice(0, x);
+
+          const outputData = { name: "button", properties: [] };
+          templateProps.forEach(
+            (prop, index) =>
+              (outputData.properties[index] = { [prop]: "doThing()" }),
+          );
+
+          const templatePropText = templateProps
+            .map((prop) => {
+              return `${prop}='doThing()'`;
+            })
+            .join(" ");
+
+          const template = `<!-- @button ${templatePropText} -->`;
+          const transformer = new CommentTransformer(template);
+
+          expect(transformer.transform()).to.deep.equal(outputData);
+        }
+      });
+
+      it("transforms with escaped quotes in property text", function () {
+        const transformer = new CommentTransformer(
+          '<!-- @button prop="some \\"quoted\\" thing" -->',
+        );
+        const outputData = {
+          name: "button",
+          properties: [{ prop: 'some "quoted" thing' }],
+        };
+
+        expect(transformer.transform()).to.deep.equal(outputData);
+      });
+
+      it("should transform with extra space characters", function () {
+        const transformer = new CommentTransformer(
+          "<!--    @button\tprop='stuff'  \n   \t\n-->",
+        );
+        const outputData = { name: "button", properties: [{ prop: "stuff" }] };
+
+        expect(transformer.transform()).to.deep.equal(outputData);
+      });
+
+      it("should return null if not a template comment (missing @)", function () {
+        const transformer = new CommentTransformer("<!-- just a comment -->");
+
+        expect(transformer.transform()).to.be.null;
+      });
+
+      it("should throw if no <!-- at beginning of comment", function () {
+        const transformer = new CommentTransformer("not a comment -->");
+
+        expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw if no --> at end of comment", function () {
+        const transformer = new CommentTransformer("<!-- @button");
+
+        expect(() => transformer.transform()).to.throw();
+        // console.log(transformer.transform());
+      });
+
+      it("should throw if no = for property", function () {
+        // Test no "=" or value in general.
+        const transformer = new CommentTransformer("<!-- @button class");
+        expect(() => transformer.transform()).to.throw();
+
+        // Also test if no "=" between prop name and value
+        transformer.load('<!-- @button class"value"');
+        expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw if no open quote for property value", function () {
+        // Test no quotes.
+        const transformer = new CommentTransformer("<!-- @button class=hi");
+        expect(() => transformer.transform()).to.throw();
+
+        // Also test literally only end quote.
+        transformer.load("<!-- @button class=hi'");
+        expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw if no end quote for property value", function () {
+        // Test no quotes.
+        const transformer = new CommentTransformer("<!-- @button class=hi");
+        expect(() => transformer.transform()).to.throw();
+
+        // Also test literally only end quote.
+        transformer.load("<!-- @button class='hi");
+        expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw on mismatched quotes (\" vs ')", function () {
+        const transformer = new CommentTransformer("<!-- @button class=\"hi'");
+        expect(() => transformer.transform()).to.throw();
+      });
+
+      it("should throw on invalid template name", function () {
+        const transformer = new CommentTransformer("<!-- @$badname -->");
+
+        expect(() => transformer.transform()).to.throw();
+      });
+    });
   });
 });
