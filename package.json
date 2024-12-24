@@ -44,5 +44,8 @@
     "globals": "^15.13.0",
     "mocha": "^11.0.1",
     "prettier": "3.4.2"
+  },
+  "dependencies": {
+    "glob": "^11.0.0"
   }
 }
